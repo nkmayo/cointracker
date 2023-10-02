@@ -3,8 +3,11 @@ import requests
 import json
 import os
 import time
+from pathlib import Path
 
-
+WAITSHORT=2   #free api is limited to 10-30 calls per minute or one every 2-6 seconds.
+WAITLONG=6.01
+TIMEOUT=91
 def getCoinGeckoPrice(asset, date):
     # takes the asset ticker (ex:BTC) and date (datetime) and returns the open price
     '''
@@ -34,11 +37,14 @@ def getCoinGeckoPrice(asset, date):
     url = "https://api.coingecko.com/api/v3/coins/"+ID+"/history?date="+date_string
     try:
         gecko = requests.get(url)
+        
         if gecko.status_code == 429:  # if too many requests error sent
-            print('Too many CoinGecko requests...waiting 90s for timeout')
-            time.sleep(91)
+            print(f'Too many CoinGecko requests...waiting {TIMEOUT}s for timeout')
+            time.sleep(TIMEOUT)
             gecko = requests.get(url)
+        time.sleep(WAITLONG)
         price = gecko.json()['market_data']['current_price']['usd']
+        print(f'Received price data for {asset} on {date}: {price} USD')
     except Exception:
         print('Bad CoinGecko request URL')
         print(url)
@@ -67,7 +73,10 @@ def updateCoinGeckoIDs():
 
     # save dictionary locally
     # with open(filepath, 'w+') as fw:
-    with open('../data/CoinGeckoIDs.json', 'w+') as fw:
+    coingecko_path = (Path(__file__).parents[2] / "data/CoinGeckoIDs.json").resolve()
+    print(coingecko_path)
+    # with open('../data/CoinGeckoIDs.json', 'w+') as fw:
+    with open(coingecko_path, 'w+') as fw:
         json.dump(idDict, fw, indent=4)
     return
 
