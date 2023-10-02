@@ -7,7 +7,7 @@ method.
 """
 
 # import the subpackages
-from cointracker import run, pricing, util
+#from cointracker import run, pricing, util
 """
 __all__ = [
         'run',

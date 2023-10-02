@@ -1,1 +1,1 @@
-from cointracker.pricing import getAssetPrice, getCoinGeckoPrice, getYahooPrice
+#from cointracker.pricing import getAssetPrice, getCoinGeckoPrice, getYahooPrice

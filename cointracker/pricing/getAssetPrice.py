@@ -1,7 +1,7 @@
 import datetime
 from dateutil import parser
-from cointracker.pricing.getYahooPrice import getYahooPrice as gyp
-from cointracker.pricing.getCoinGeckoPrice import getCoinGeckoPrice as gcgp
+from pricing.getYahooPrice import getYahooPrice as gyp
+from pricing.getCoinGeckoPrice import getCoinGeckoPrice as gcgp
 
 # maybe use relative imports instead?
 # from .getYahooPrice import getYahooPrice as gyp
