@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 import datetime
 from dateutil import parser
-from cointracker.pricing.getAssetPrice import getAssetPrice
-from cointracker.util.util import identifyAssets
+from pricing.getAssetPrice import getAssetPrice
+from util.util import identifyAssets
 
 
 def parseOrderBook(filename, sheet):
@@ -43,8 +43,9 @@ def parseOrderBook(filename, sheet):
                          (df['Fee Coin'] == df.loc[index, 'Fee Coin'])
         tempMergers = df[potMergersMask]
         numPartialOrders = len(tempMergers)
-        if numPartialOrders > 1:  # nothing to merge if there's only one in the list
-            if partialOrderNum == 1:
+        if numPartialOrders > 1:  # nothing to merge if there's only one in the list            
+            indicies = tempMergers.index # get the indicies of all being merged
+            if not (tempMergers==tempMergers.loc[indicies[0],:]).all().all(): # only need ot examine if not already averaged
                 # total = price*amount - fee*fee spot price?
                 netAmount = tempMergers['Amount'].sum()
                 # total = tempMergers['Total'].sum()
@@ -57,26 +58,17 @@ def parseOrderBook(filename, sheet):
                 avg2USDspot = (tempMergers['Market 2 USD Spot Price']*weights).sum(min_count=1)
                 feeUSDspot = (tempMergers['Fee Coin USD Spot Price']*weights).sum(min_count=1)
 
-            # set average values
-            df.loc[index, 'Price'] = avgPrice
-            df.loc[index, 'Amount'] = netAmount
-            # later becomes redundant... df.loc[index, 'Total'] = total
-            df.loc[index, 'Fee'] = netFee
-            df.loc[index, 'Market 1 USD Spot Price'] = avg1USDspot
-            df.loc[index, 'Market 2 USD Spot Price'] = avg2USDspot
-            df.loc[index, 'Fee Coin USD Spot Price'] = feeUSDspot
+                # set average values
+                df.loc[indicies, 'Price'] = avgPrice
+                df.loc[indicies, 'Amount'] = netAmount
+                # later becomes redundant... df.loc[index, 'Total'] = total
+                df.loc[indicies, 'Fee'] = netFee
+                df.loc[indicies, 'Market 1 USD Spot Price'] = avg1USDspot
+                df.loc[indicies, 'Market 2 USD Spot Price'] = avg2USDspot
+                df.loc[indicies, 'Fee Coin USD Spot Price'] = feeUSDspot
 
-            # duplicate to the other rows in tempMergers
-            df[potMergersMask] = df.loc[index, :]
-
-            # skip the next order indicies
-            if partialOrderNum < numPartialOrders:
-                partialOrderNum = partialOrderNum+1
-            else:
-                partialOrderNum = 1
-                avg1USDspot = np.nan
-                avg2USDspot = np.nan
-                feeUSDspot = np.nan
+                # duplicate to the other rows in tempMergers
+                df[potMergersMask] = df.loc[index, :]
 
     # all partial orders are now duplicates, so drop them
     df = df.drop_duplicates()
@@ -110,5 +102,7 @@ def parseOrderBook(filename, sheet):
             df.loc[index, 'Fee Coin USD Spot Price'] = \
                 getAssetPrice(dfmissing.loc[index, 'Fee Coin'], date)
     print('Prices updated')
+
+    df['Type']=df['Type'].apply(lambda x: x.upper()) # enforce Type capitalization
 
     return df
